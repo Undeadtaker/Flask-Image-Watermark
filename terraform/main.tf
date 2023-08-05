@@ -2,7 +2,7 @@ terraform {
   required_providers {
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 3.0"
+      version = "~> 4.0"
     }
   }
 }
@@ -171,3 +171,118 @@ resource "aws_lb_target_group_attachment" "attachment" {
   target_id        = aws_instance.EC2_flask.id
   port             = 80
 }
+
+
+// ==== LAMBDA + S3 RESOURCES ==== //
+
+resource "aws_iam_role" "lambda_role" {
+ name   = "terraform_aws_lambda_role"
+ assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": "sts:AssumeRole",
+      "Principal": {
+        "Service": "lambda.amazonaws.com"
+      },
+      "Effect": "Allow",
+      "Sid": ""
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_policy" "lambda_policy" {
+  name = "terraform_aws_lambda_policy"
+  path = "/"
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents"
+      ],
+      "Resource": "arn:aws:logs:*:*:*",
+      "Effect": "Allow"
+    }
+  ]
+}
+EOF
+}
+
+// We give lambda another policy to write to the s3 bucket
+resource "aws_iam_policy" "lambda_write_to_s3_policy" {
+  name = "s3-write-policy"
+
+  policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "s3:PutObject",
+                "s3:PutObjectAcl"
+            ],
+            "Resource": [
+                "arn:aws:s3:::${aws_s3_bucket.my_bucket.bucket}",
+                "arn:aws:s3:::${aws_s3_bucket.my_bucket.bucket}/*"
+            ]
+        }
+    ]
+}
+EOF
+}
+
+// Now we create the S3 bucket
+resource "aws_s3_bucket" "my_bucket" {
+  bucket = "s3-flask-bucket" 
+}
+
+
+
+# Attach the policy to the role 
+resource "aws_iam_role_policy_attachment" "attach_policy_to_role" {
+  role       = aws_iam_role.lambda_role.name
+  policy_arn = aws_iam_policy.lambda_policy.arn
+}
+
+// Attach the s3 write to the existing role
+resource "aws_iam_role_policy_attachment" "lambda_s3_attachment" {
+  policy_arn = aws_iam_policy.lambda_write_to_s3_policy.arn
+  role       = aws_iam_role.lambda_role.name
+}
+
+
+# Generate .zip file to be uploaded to the lambda function 
+data "archive_file" "zip_python_code" {
+  type          = "zip"
+  source_dir    = "${path.module}/python"
+  output_path   = "${path.module}/python/hello_world.zip"
+}
+
+
+# Finally, create the lambda function itself
+resource "aws_lambda_function" "lambda_function" {
+  filename            = "${path.module}/python/hello_world.zip"
+  function_name       = "lambda_flask"
+  role                = aws_iam_role.lambda_role.arn
+  handler             = "hello_world.lambda_handler"
+  runtime             = "python3.10"
+  architectures       = ["x86_64"]
+  source_code_hash    = "${data.archive_file.zip_python_code.output_base64sha256}"
+  depends_on          = [aws_iam_role_policy_attachment.attach_policy_to_role, aws_iam_role_policy_attachment.lambda_s3_attachment]
+  timeout             = 60
+
+  # https://github.com/keithrozario/Klayers/tree/master/deployments/python3.10
+  layers = [
+    "arn:aws:lambda:eu-central-1:770693421928:layer:Klayers-p310-Pillow:3"
+  ]
+}
+
+
