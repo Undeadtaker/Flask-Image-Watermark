@@ -24,12 +24,17 @@ To feed the keys into terraform you will naviagate to the terraform folder and c
 set these values.
 
 `region = "{the region where you want the infrastructure to be provisioned}"` 
-`access_key = "{account access key}"` 
+
+`access_key = "{account access key}"`
+
 `secret_key = "{account secret key}"` 
 
 The file terraform.tfvars should look something like this (NOTE: these are dummy values)
+
 `region = "eu-central-1"` 
+
 `access_key = "AKIAdummyAccessKey1234567890"` 
+
 `secret_key = "2T4Vm3Qz6K8G1oB9cP5D7HrIjLqOzR8S1X6Y4bG7"` 
 
 To feed the keys into packer you will naviagate to the packer folder and create a file called "variables.pkrvars.hcl". Do the same
