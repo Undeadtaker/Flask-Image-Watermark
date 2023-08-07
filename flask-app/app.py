@@ -10,11 +10,6 @@ app = Flask(__name__)
 app.debug = True
 
 
-@app.route('/')
-def index():
-    return render_template('index.html')
-
-
 @app.route('/', methods=("POST", "GET"))
 def upload_file():
     if request.method == 'POST':
@@ -37,6 +32,33 @@ def upload_file():
 
         return render_template('index.html')
 
+    if request.method == 'GET':
+        return render_template('index.html')
+
+
+@app.route('/list_images', methods=["GET"])
+def get_images():
+    s3_client = boto3.client("s3")
+    bucket_name = "s3-flask-bucket"
+    response = s3_client.list_objects_v2(Bucket=bucket_name)
+    files = response.get("Contents")
+    if files:
+        for file in files:
+            print(f"file_name: {file['Key']}, size: {file['Size']}")
+
+    return render_template('files.html', files=files)
 
 if __name__ == '__main__':
     app.run()
+
+
+
+
+
+
+
+
+
+
+
+
