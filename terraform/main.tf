@@ -108,7 +108,6 @@ resource "aws_security_group" "EC2_flask_SG" {
 
 // ==== END OF SGs ==== //
 
-// ==== CREATING THE ALB RESOURCE ==== //
 resource "aws_lb" "alb_flask" {
   name               = "alb-flask"
   internal           = false
@@ -151,18 +150,26 @@ resource "aws_lb_listener" "alb_flask_listener" {
   }
 }
 
+// We get the ami of the custom created image
+data "aws_ami" "packer_created_ami" {
+  most_recent      = true
+  name_regex       = "^flask-app"
+}
 
 // We define the EC2 
 resource "aws_instance" "EC2_flask" {
-  ami             = "ami-07ce6ac5ac8a0ee6f" 
+  ami             = data.aws_ami.packer_created_ami.id  // Id is set to the ami
   instance_type   = "t2.micro"
   subnet_id       = local.default_vpc_subnet_ids[0]
 
+  # iam_instance_profile = aws_iam_role.EC2_flask_role.name
   security_groups = [aws_security_group.EC2_flask_SG.id]
 
   tags = {
     Name = "terraform_EC2"
   }
+
+  depends_on      = [data.aws_ami.packer_created_ami]
 }
 
 // Register EC2 instance with the target group
@@ -171,7 +178,6 @@ resource "aws_lb_target_group_attachment" "attachment" {
   target_id        = aws_instance.EC2_flask.id
   port             = 80
 }
-
 
 // ==== LAMBDA + S3 RESOURCES ==== //
 
@@ -241,9 +247,41 @@ EOF
 
 // Now we create the S3 bucket
 resource "aws_s3_bucket" "my_bucket" {
-  bucket = "s3-flask-bucket" 
+  bucket                  = "s3-flask-bucket" 
 }
 
+resource "aws_s3_bucket_public_access_block" "my_bucket_block" {
+  bucket = aws_s3_bucket.my_bucket.id
+
+  block_public_acls       = false
+  block_public_policy     = false
+  ignore_public_acls      = false
+  restrict_public_buckets = false
+}
+
+
+resource "aws_s3_bucket_policy" "example" {
+  bucket = aws_s3_bucket.my_bucket.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid = "AllowPublicRead"
+        Effect = "Allow"
+        Principal = "*"
+        Action = [
+          "s3:GetObject"
+        ]
+        Resource = [
+          "${aws_s3_bucket.my_bucket.arn}/*"
+        ]
+      }
+    ]
+  })
+
+  depends_on = [aws_s3_bucket_public_access_block.my_bucket_block]
+}
 
 
 # Attach the policy to the role 
