@@ -43,9 +43,11 @@ as you have done for terraform.tfvars.
 ### 3) Provision infrastructure
 Before we can provision infrastructure, we need to bake the ec2 instance to create a custom AMI. To do this, open up a shell 
 or command prompt and navigate to the packer folder. Here, you will write 
+
 `packer build -var-file="variables.pkrvars.hcl" .` 
 
 Wait for the process to finish. Then finally to provision the infrastructure and set everything up, open up a command shell and navigate to the terraform folder and write 
+
 `terraform apply -auto-approve`. 
 
 This will provision all the infrastructure in the background. Wait for the process to finish. Open up your aws console and find load balancers. 
@@ -62,8 +64,7 @@ to list images you would do:
 
 Here you can see the uploaded images. 
 
-# Thank you for taking an interest in my project! 
-# :) 
+# Thank you for taking an interest in my project! :) 
 
 
 
