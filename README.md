@@ -1,8 +1,6 @@
 # Flask Image Watermark
  
-
-
-![updated drawio](https://github.com/Undeadtaker/Flask-Image-Watermark/assets/61665341/462ae40e-d569-4bc7-99cf-ef4c3a9f7d1f)
+![updated drawio (1)](https://github.com/Undeadtaker/Flask-Image-Watermark/assets/61665341/2c343779-7b29-4a38-ac04-efca5bf381a6)
 
 
 # Installation
