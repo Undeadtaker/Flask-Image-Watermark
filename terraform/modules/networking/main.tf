@@ -22,7 +22,7 @@ resource "aws_internet_gateway" "main" {
 resource "aws_subnet" "main_public" {
   vpc_id                   = aws_vpc.main.id
   availability_zone        = var.primary_zone
-  cidr_block               = cidrsubnet(var.main_cidr_block, 0, 1)
+  cidr_block               = cidrsubnet(var.main_cidr_block, 2, 1)
   map_public_ip_on_launch  = true
   depends_on               = [aws_internet_gateway.main]
 
@@ -34,7 +34,7 @@ resource "aws_subnet" "main_public" {
 resource "aws_subnet" "main_private" {
   vpc_id                   = aws_vpc.main.id
   availability_zone        = var.primary_zone
-  cidr_block               = cidrsubnet(var.main_cidr_block, 0, 3)
+  cidr_block               = cidrsubnet(var.main_cidr_block, 2, 3)
   
   tags = {
     Name = "private subenet"
