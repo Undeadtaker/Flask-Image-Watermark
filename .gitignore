@@ -158,4 +158,21 @@ Untitled Diagram (4).drawio
 
 
 
+# Local .terraform directories
+**/.terraform/*
+*.plan
+tfplan.txt
+.terraform.lock.hcl
 
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+crash.*.log
+
+**/.pem/*
+
+private.pem
+ansible/output/*
