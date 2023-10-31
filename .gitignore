@@ -157,7 +157,6 @@ flask image watermark.png
 Untitled Diagram (4).drawio
 
 
-
 # Local .terraform directories
 **/.terraform/*
 *.plan
@@ -176,3 +175,6 @@ crash.*.log
 
 private.pem
 ansible/output/*
+
+terraform/terraform.tfvars
+terraform/.terraform.lock.hcl
