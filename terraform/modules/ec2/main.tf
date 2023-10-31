@@ -41,19 +41,19 @@ resource "aws_instance" "observe_master" {
   iam_instance_profile    = var.ec2_profile_name
   
   root_block_device {
-  │ delete_on_termination = true
-  │ volume_size           = 5
-  │ volume_type           = "gp2"
+    delete_on_termination = true
+    volume_size           = 5
+    volume_type           = "gp2"
   }
   
   network_interface {
-  │ network_interface_id  = aws_network_interface.observe_private_eni.id
-  │ device_index          = 0
+    network_interface_id  = aws_network_interface.observe_private_eni.id
+    device_index          = 0
   }
   
   tags = {
-  │ Name                  = "observe_master"
-  │ Role                  = "observe"
+    Name                  = "observe_master"
+    Role                  = "observe"
   }
 }
 
@@ -65,18 +65,18 @@ resource "aws_instance" "flask_instances" {
   iam_instance_profile    = var.ec2_profile_name
   
   root_block_device {
-  │ delete_on_termination = true
-  │ volume_size           = 5
-  │ volume_type           = "gp2"
+    delete_on_termination = true
+    volume_size           = 5
+    volume_type           = "gp2"
   }
   
   network_interface {
-  │ network_interface_id  = element(aws_network_interface.flask_private_eni, count.index).id
-  │ device_index          = 0
+    network_interface_id  = element(aws_network_interface.flask_private_eni, count.index).id
+    device_index          = 0
   }
   
   tags = {
-  │ Name                  = format("flask_instance", count.index + 1, var.base_dn)
-  │ Role                  = "flask"
+    Name                  = format("flask_instance", count.index + 1, var.base_dn)
+    Role                  = "flask"
   }
 }

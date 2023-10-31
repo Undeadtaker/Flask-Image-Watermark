@@ -17,6 +17,30 @@ resource "aws_iam_role" "lambda_role" {
 }
 EOF
 
+resource "aws_iam_role" "ec2_role" {
+  name = format("ec2-flask-role")
+
+  assume_role_policy = <<EOF
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Effect": "Allow",
+            "Action": [
+                "sts:AssumeRole"
+            ],
+            "Principal": {
+                "Service": [
+                    "ec2.amazonaws.com"
+                ]
+            }
+        }
+    ]
+}
+EOF
+}
+
+
 resource "aws_iam_policy" "ec2_policy" {
   name        = format("%s-%s_ec2_policy", var.deployment_name, var.network_type)
   path        = "/"
@@ -25,36 +49,6 @@ resource "aws_iam_policy" "ec2_policy" {
 {
     "Version": "2012-10-17",
     "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ssm:DescribeAssociation",
-                "ssm:GetDeployablePatchSnapshotForInstance",
-                "ssm:GetDocument",
-                "ssm:DescribeDocument",
-                "ssm:GetManifest",
-                "ssm:GetParameters",
-                "ssm:ListAssociations",
-                "ssm:ListInstanceAssociations",
-                "ssm:PutInventory",
-                "ssm:PutComplianceItems",
-                "ssm:PutConfigurePackageResult",
-                "ssm:UpdateAssociationStatus",
-                "ssm:UpdateInstanceAssociationStatus",
-                "ssm:UpdateInstanceInformation"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ssmmessages:CreateControlChannel",
-                "ssmmessages:CreateDataChannel",
-                "ssmmessages:OpenControlChannel",
-                "ssmmessages:OpenDataChannel"
-            ],
-            "Resource": "*"
-        },
         {
             "Effect": "Allow",
             "Action": [
@@ -78,14 +72,6 @@ resource "aws_iam_policy" "ec2_policy" {
             "Effect": "Allow",
             "Action": [
                 "ec2:DescribeInstanceStatus"
-            ],
-            "Resource": "*"
-        },
-        {
-            "Effect": "Allow",
-            "Action": [
-                "ds:CreateComputer",
-                "ds:DescribeDirectories"
             ],
             "Resource": "*"
         },
