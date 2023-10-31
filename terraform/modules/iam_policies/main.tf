@@ -18,7 +18,7 @@ resource "aws_iam_role" "lambda_role" {
 EOF
 
 resource "aws_iam_role" "ec2_role" {
-  name = format("ec2-flask-role")
+  name = "ec2-flask-role"
 
   assume_role_policy = <<EOF
 {
@@ -42,10 +42,10 @@ EOF
 
 
 resource "aws_iam_policy" "ec2_policy" {
-  name        = format("%s-%s_ec2_policy", var.deployment_name, var.network_type)
+  name        = "ec2-flask-policy"
   path        = "/"
   description = "Policy to provide permissions to flask EC2 instances"
-  policy      = <<TEXT
+  policy      = <<EOF
 {
     "Version": "2012-10-17",
     "Statement": [
@@ -102,17 +102,17 @@ resource "aws_iam_policy" "ec2_policy" {
         }
     ]
 }
-TEXT
+EOF
 }
 
 resource "aws_iam_policy_attachment" "ec2_policy_role" {
-  name       = "ssm.${var.base_dn}"
+  name       = "ec2-flask-attach"
   roles      = [aws_iam_role.ec2_role.name]
   policy_arn = aws_iam_policy.ec2_policy.arn
 }
 
-resource "aws_iam_instance_profile" "ec2_profile" {
-  name = "ssm-profile.${var.base_dn}"
+resource "aws_iam_instance_profile" "ec2_flask_profile" {
+  name = "ec2-flask-profile"
   role = aws_iam_role.ec2_role.name
 }
 

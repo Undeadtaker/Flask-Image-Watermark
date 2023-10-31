@@ -38,7 +38,7 @@ resource "aws_instance" "observe_master" {
   ami                     = var.base_ami
   instance_type           = var.instance_type
   key_name                = aws_key_pair.key_pair.key_name
-  iam_instance_profile    = var.ec2_profile_name
+  iam_instance_profile    = var.ec2_flask_profile  // CHANGE LATER TO OBSERVE EC2 IAM PROFILE
   
   root_block_device {
     delete_on_termination = true
@@ -62,7 +62,7 @@ resource "aws_instance" "flask_instances" {
   instance_type           = var.instance_type
   count                   = 2
   key_name                = aws_key_pair.key_pair.key_name
-  iam_instance_profile    = var.ec2_profile_name
+  iam_instance_profile    = var.ec2_flask_profile
   
   root_block_device {
     delete_on_termination = true
