@@ -1,3 +1,4 @@
+// Roles
 resource "aws_iam_role" "lambda_role" {
   name = format("lambda-role")
 
@@ -16,7 +17,6 @@ resource "aws_iam_role" "lambda_role" {
   ]
 }
 EOF
-
 resource "aws_iam_role" "ec2_role" {
   name = "ec2-flask-role"
 
@@ -40,7 +40,7 @@ resource "aws_iam_role" "ec2_role" {
 EOF
 }
 
-
+// Policies
 resource "aws_iam_policy" "ec2_policy" {
   name        = "ec2-flask-policy"
   path        = "/"
@@ -104,15 +104,70 @@ resource "aws_iam_policy" "ec2_policy" {
 }
 EOF
 }
+resource "aws_iam_policy" "lambda_policy" {
+  name = "combined-lambda-s3-policy"
 
+  policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "logs:CreateLogGroup",
+        "logs:CreateLogStream",
+        "logs:PutLogEvents",
+        "s3:PutObject",
+        "s3:PutObjectAcl"
+      ],
+      "Resource": [
+        "arn:aws:logs:*:*:*",
+        "arn:aws:s3:::${aws_s3_bucket.my_bucket.bucket}",
+        "arn:aws:s3:::${aws_s3_bucket.my_bucket.bucket}/*"
+      ]
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_s3_bucket_policy" "example" {
+  bucket = var.my_bucket #.id
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Sid = "AllowPublicRead"
+        Effect = "Allow"
+        Principal = "*"
+        Action = [
+          "s3:GetObject"
+        ]
+        Resource = [
+          "${aws_s3_bucket.my_bucket.arn}/*"
+        ]
+      }
+    ]
+  })
+
+  # depends_on = [aws_s3_bucket_public_access_block.my_bucket_block]
+}
+
+
+// Attachments
 resource "aws_iam_policy_attachment" "ec2_policy_role" {
   name       = "ec2-flask-attach"
   roles      = [aws_iam_role.ec2_role.name]
   policy_arn = aws_iam_policy.ec2_policy.arn
 }
-
 resource "aws_iam_instance_profile" "ec2_flask_profile" {
   name = "ec2-flask-profile"
   role = aws_iam_role.ec2_role.name
 }
 
+resource "aws_iam_policy_attachment" "lambda_policy_role" {
+  name       = "lambda-attach"
+  roles      = [aws_iam_role.lambda_role.name]
+  policy_arn = aws_iam_policy.lambda_policy.arn
+}

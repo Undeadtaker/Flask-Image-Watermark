@@ -200,47 +200,29 @@ resource "aws_iam_role" "lambda_role" {
 EOF
 }
 
-resource "aws_iam_policy" "lambda_policy" {
-  name = "terraform_aws_lambda_policy"
-  path = "/"
+resource "aws_iam_policy" "lambda_combined_policy" {
+  name = "combined-lambda-s3-policy"
+
   policy = <<EOF
 {
   "Version": "2012-10-17",
   "Statement": [
     {
+      "Effect": "Allow",
       "Action": [
         "logs:CreateLogGroup",
         "logs:CreateLogStream",
-        "logs:PutLogEvents"
+        "logs:PutLogEvents",
+        "s3:PutObject",
+        "s3:PutObjectAcl"
       ],
-      "Resource": "arn:aws:logs:*:*:*",
-      "Effect": "Allow"
+      "Resource": [
+        "arn:aws:logs:*:*:*",
+        "arn:aws:s3:::${aws_s3_bucket.my_bucket.bucket}",
+        "arn:aws:s3:::${aws_s3_bucket.my_bucket.bucket}/*"
+      ]
     }
   ]
-}
-EOF
-}
-
-// We give lambda another policy to write to the s3 bucket
-resource "aws_iam_policy" "lambda_write_to_s3_policy" {
-  name = "s3-write-policy"
-
-  policy = <<EOF
-{
-    "Version": "2012-10-17",
-    "Statement": [
-        {
-            "Effect": "Allow",
-            "Action": [
-                "s3:PutObject",
-                "s3:PutObjectAcl"
-            ],
-            "Resource": [
-                "arn:aws:s3:::${aws_s3_bucket.my_bucket.bucket}",
-                "arn:aws:s3:::${aws_s3_bucket.my_bucket.bucket}/*"
-            ]
-        }
-    ]
 }
 EOF
 }
