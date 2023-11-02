@@ -1,17 +1,17 @@
 resource "aws_route53_zone" "private_zone" {
-  name = var.base_dn
+  name = var.internal_dn
   force_destroy = true
   vpc {
-    vpc_id = var.main_vpc
+    vpc_id = var.main_vpc.id
     vpc_region = var.region
   }
 }
 
 resource "aws_route53_zone" "reverse_zone" {
-  name = var.base_dn
+  name = var.internal_dn
   force_destroy = true
   vpc {
-    vpc_id = var.main_vpc
+    vpc_id = var.main_vpc.id
     vpc_region = var.region
   }
 }
@@ -50,7 +50,7 @@ resource "aws_route53_record" "monitoring_reverse" {
 }
 
 resource "aws_acm_certificate" "main_flask" {
-  domain_name       = "${var.deployment_name}.${data.aws_route53_zone.private_zone.name}"
+  domain_name       = "flask_project.${data.aws_route53_zone.private_zone.name}"
   validation_method = "DNS"
 
   lifecycle {

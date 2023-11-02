@@ -7,7 +7,3 @@ variable "main_public_subnet" {
 variable "flask_instance_ids" {
   type = list()
 }
-variable "main_flask_certificate" {
-  type = string
-}
-

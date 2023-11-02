@@ -132,7 +132,7 @@ EOF
 }
 
 resource "aws_s3_bucket_policy" "example" {
-  bucket = var.my_bucket #.id
+  bucket = var.my_bucket.id
 
   policy = jsonencode({
     Version = "2012-10-17"

@@ -10,7 +10,7 @@ variable "instance_type" {
   description = "The instance type, t2.micro"
   type        = string
 }
-variable "ec2_profile_name" {
+variable "ec2_flask_profile" {
   description = "The profile name"
   type        = string
 }

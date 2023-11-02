@@ -58,9 +58,9 @@ resource "aws_instance" "observe_master" {
 }
 
 resource "aws_instance" "flask_instances" {
+  count                   = 2
   ami                     = var.base_ami
   instance_type           = var.instance_type
-  count                   = 2
   key_name                = aws_key_pair.key_pair.key_name
   iam_instance_profile    = var.ec2_flask_profile
   
@@ -76,7 +76,7 @@ resource "aws_instance" "flask_instances" {
   }
   
   tags = {
-    Name                  = format("flask_instance", count.index + 1, var.base_dn)
+    Name                  = format("flask_instance_0%d", count.index + 1)
     Role                  = "flask"
   }
 }

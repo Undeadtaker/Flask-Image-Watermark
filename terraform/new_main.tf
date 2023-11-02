@@ -6,28 +6,39 @@ terraform {
     }
   }
 }
-
-locals = {
-  internal_dn = "placeholder"
-
-  // The whole infrastructure is created in the first availability zone 
-  primary_zone        = data.aws_availability_zones.available.names[0]
-  base_ami            = "base ami for ubuntu for eu-central-1"
-  instance_type       = "t2.micro"
-  ec2_profile_name    = "default or other instance profile"
+provider "aws" {
+  region     = var.region
+  access_key = var.access_key
+  secret_key = var.secret_key
 }
+
 
 module "netorking" {
-  source              = "./modules/networking"
-  internal_dn         = local.internal_dn
-  main_cidr_block     = var.main_cidr_block
-  primary_zone        = local.primary_zone
+  source                 = "./modules/networking"
+  main_cidr_block        = var.main_cidr_block
+  default_region         = var.default_region
 }
- 
+
 module "ec2" {
-  source              = "./modules/ec2"
-  main_private_subnet = module.netorking.main_private_subnet
-  base_ami            = local.base_ami
-  instance_type       = local.instance_type
-  ec2_profile_name    = local.ec2_profile_name
+  source                 = "./modules/ec2"
+  base_ami               = var.base_ami
+  instance_type          = var.instance_type
+  main_private_subnet    = module.netorking.main_private_subnet
+  ec2_profile_name       = module.iam.ec2_flask_profile
+}
+
+module "s3" {
+  source                 = "./modules/s3"
+}
+
+module "alb" {
+  source                 = "./modules/alb"
+  main_vpc               = module.networking.main_vpc
+  flask_instance_ids     = module.ec2.flask_instance_ids
+  main_public_subnet     = module.networking.main_public_subnet
+}
+
+module "iam" {
+  source                 = "./modules/iam"
+  my_bucket              = module.s3.my_bucket
 }
