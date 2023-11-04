@@ -44,7 +44,7 @@ resource "aws_security_group" "alb_SG" {
 }
 
 # SG for EC2
-resource "aws_security_group" "EC2_flask_SG" {
+resource "aws_security_group" "ec2_flask_SG" {
   name_prefix = "EC2-flask-SG"
   description = "Security group for EC2 instance running Flask app."
 
@@ -84,7 +84,7 @@ resource "aws_security_group" "EC2_flask_SG" {
   }
 }
 
-resource "aws_security_group" "EC2_observe_SG" {
+resource "aws_security_group" "ec2_observe_SG" {
   name_prefix = "EC2-observe-SG"
   description = "Security group for EC2 instance running monitoring servers."
 

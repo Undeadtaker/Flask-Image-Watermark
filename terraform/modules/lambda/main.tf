@@ -21,4 +21,3 @@ resource "aws_lambda_function" "lambda_function" {
     "arn:aws:lambda:eu-central-1:770693421928:layer:Klayers-p310-Pillow:3"
   ]
 }
-

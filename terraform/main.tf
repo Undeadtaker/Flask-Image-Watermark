@@ -6,21 +6,6 @@ terraform {
     }
   }
 }
-
-
-# Private variables defined in terraform.tfvars
-variable "region" {
-  type = string
-}
-
-variable "access_key" {
-  type = string
-}
-
-variable "secret_key" {
-  type = string
-}
-
 provider "aws" {
   region     = var.region
   access_key = var.access_key
@@ -28,281 +13,45 @@ provider "aws" {
 }
 
 
-# Getting the VPC + the security groups associated with it
-data "aws_vpc" "default" {
-  default = true
+module "netorking" {
+  source                 = "./modules/networking"
+  main_cidr_block        = var.main_cidr_block
+  default_region         = var.default_region
 }
 
-data "aws_subnet_ids" "subnets" {
-  vpc_id = data.aws_vpc.default.id
+module "security_groups" {
+  source                 = "./modules/security_groups"
 }
 
-locals {
-  default_vpc_id = data.aws_vpc.default.id
-  default_vpc_subnet_ids = tolist(data.aws_subnet_ids.subnets.ids)
+module "ec2" {
+  source                 = "./modules/ec2"
+  base_ami               = var.base_ami
+  instance_type          = var.instance_type
+
+  main_private_subnet    = module.netorking.main_private_subnet
+  ec2_profile_name       = module.iam.ec2_flask_profile
+  ec2_flask_SG           = module.security_groups.ec2_flask_SG
+  ec2_observe_SG         = module.security_groups.ec2_observe_SG
 }
 
-
-// ==== START OF SGs ==== //
-
-// SG for ALB
-resource "aws_security_group" "alb_SG" {
-  name   = "alb-flask-SG"
-  description = "ALB SG allows ingress from anywhere."
-
-
-  vpc_id = local.default_vpc_id
-
-  // ingress from ANY source 
-  ingress {
-    from_port   = "80"
-    to_port     = "80"
-    protocol    = "TCP"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-  egress {
-    from_port        = 0
-    to_port          = 0
-    protocol         = "-1"
-    cidr_blocks      = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "terraform_ALB_SG"
-  }
+module "s3" {
+  source                 = "./modules/s3"
 }
 
-# SG for EC2
-resource "aws_security_group" "EC2_flask_SG" {
-  name_prefix = "EC2-flask-SG"
-  description = "Security group for EC2 instance running Flask app."
-
-  vpc_id = local.default_vpc_id
-
-  // Allow incoming HTTP traffic from the ALB security group
-  ingress {
-    from_port   = 80
-    to_port     = 80
-    protocol    = "TCP"
-    security_groups = [aws_security_group.alb_SG.id]
-  }
-
-  ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "TCP"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  egress {
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "terraform_EC2_SG"
-  }
+module "iam" {
+  source                 = "./modules/iam"
+  my_bucket              = module.s3.my_bucket
 }
 
-// ==== END OF SGs ==== //
-
-resource "aws_lb" "alb_flask" {
-  name               = "alb-flask"
-  internal           = false
-  load_balancer_type = "application"
-
-  security_groups    = [aws_security_group.alb_SG.id]
-  subnets            = local.default_vpc_subnet_ids
-
-  tags = {
-    Name = "terraform_ALB"
-  }
+module "lambda" {
+  source                 = "./modules/lambda"
+  lambda_role            = module.iam.lambda_role
 }
 
-// Now we define the EC2 to be the target group of the ALB
-resource "aws_lb_target_group" "alb_flask_target_group" {
-  name        = "alb-flask-target-group"
-  port        = 80
-  protocol    = "HTTP"
-  vpc_id      = local.default_vpc_id
-  target_type = "instance"
-
-  health_check {
-    healthy_threshold   = 2
-    unhealthy_threshold = 2
-    timeout             = 5
-    interval            = 10
-    path                = "/"
-    port                = "traffic-port"
-  }
+module "alb" {
+  source                 = "./modules/alb"
+  main_vpc               = module.networking.main_vpc
+  alb_SG                 = module.security_groups.alb_SG
+  flask_instance_ids     = module.ec2.flask_instance_ids
+  main_public_subnet     = module.networking.main_public_subnet
 }
-
-resource "aws_lb_listener" "alb_flask_listener" {
-  load_balancer_arn = aws_lb.alb_flask.arn
-  port              = 80
-  protocol          = "HTTP"
-
-  default_action {
-    type             = "forward"
-    target_group_arn = aws_lb_target_group.alb_flask_target_group.arn
-  }
-}
-
-// We get the ami of the custom created image
-data "aws_ami" "packer_created_ami" {
-  most_recent      = true
-  name_regex       = "^flask-app"
-}
-
-// We define the EC2 
-resource "aws_instance" "EC2_flask" {
-  ami             = data.aws_ami.packer_created_ami.id  // Id is set to the ami
-  instance_type   = "t2.micro"
-  subnet_id       = local.default_vpc_subnet_ids[0]
-
-  # iam_instance_profile = aws_iam_role.EC2_flask_role.name
-  security_groups = [aws_security_group.EC2_flask_SG.id]
-
-  tags = {
-    Name = "terraform_EC2"
-  }
-
-  depends_on      = [data.aws_ami.packer_created_ami]
-}
-
-// Register EC2 instance with the target group
-resource "aws_lb_target_group_attachment" "attachment" {
-  target_group_arn = aws_lb_target_group.alb_flask_target_group.arn
-  target_id        = aws_instance.EC2_flask.id
-  port             = 80
-}
-
-// ==== LAMBDA + S3 RESOURCES ==== //
-
-resource "aws_iam_role" "lambda_role" {
- name   = "terraform_aws_lambda_role"
- assume_role_policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Action": "sts:AssumeRole",
-      "Principal": {
-        "Service": "lambda.amazonaws.com"
-      },
-      "Effect": "Allow",
-      "Sid": ""
-    }
-  ]
-}
-EOF
-}
-
-resource "aws_iam_policy" "lambda_combined_policy" {
-  name = "combined-lambda-s3-policy"
-
-  policy = <<EOF
-{
-  "Version": "2012-10-17",
-  "Statement": [
-    {
-      "Effect": "Allow",
-      "Action": [
-        "logs:CreateLogGroup",
-        "logs:CreateLogStream",
-        "logs:PutLogEvents",
-        "s3:PutObject",
-        "s3:PutObjectAcl"
-      ],
-      "Resource": [
-        "arn:aws:logs:*:*:*",
-        "arn:aws:s3:::${aws_s3_bucket.my_bucket.bucket}",
-        "arn:aws:s3:::${aws_s3_bucket.my_bucket.bucket}/*"
-      ]
-    }
-  ]
-}
-EOF
-}
-
-// Now we create the S3 bucket
-resource "aws_s3_bucket" "my_bucket" {
-  bucket                  = "s3-flask-bucket" 
-}
-
-resource "aws_s3_bucket_public_access_block" "my_bucket_block" {
-  bucket = aws_s3_bucket.my_bucket.id
-
-  block_public_acls       = false
-  block_public_policy     = false
-  ignore_public_acls      = false
-  restrict_public_buckets = false
-}
-
-
-resource "aws_s3_bucket_policy" "example" {
-  bucket = aws_s3_bucket.my_bucket.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid = "AllowPublicRead"
-        Effect = "Allow"
-        Principal = "*"
-        Action = [
-          "s3:GetObject"
-        ]
-        Resource = [
-          "${aws_s3_bucket.my_bucket.arn}/*"
-        ]
-      }
-    ]
-  })
-
-  depends_on = [aws_s3_bucket_public_access_block.my_bucket_block]
-}
-
-
-# Attach the policy to the role 
-resource "aws_iam_role_policy_attachment" "attach_policy_to_role" {
-  role       = aws_iam_role.lambda_role.name
-  policy_arn = aws_iam_policy.lambda_policy.arn
-}
-
-// Attach the s3 write to the existing role
-resource "aws_iam_role_policy_attachment" "lambda_s3_attachment" {
-  policy_arn = aws_iam_policy.lambda_write_to_s3_policy.arn
-  role       = aws_iam_role.lambda_role.name
-}
-
-
-# Generate .zip file to be uploaded to the lambda function 
-data "archive_file" "zip_python_code" {
-  type          = "zip"
-  source_dir    = "${path.module}/python"
-  output_path   = "${path.module}/python/hello_world.zip"
-}
-
-
-# Finally, create the lambda function itself
-resource "aws_lambda_function" "lambda_function" {
-  filename            = "${path.module}/python/hello_world.zip"
-  function_name       = "lambda_flask"
-  role                = aws_iam_role.lambda_role.arn
-  handler             = "hello_world.lambda_handler"
-  runtime             = "python3.10"
-  architectures       = ["x86_64"]
-  source_code_hash    = "${data.archive_file.zip_python_code.output_base64sha256}"
-  depends_on          = [aws_iam_role_policy_attachment.attach_policy_to_role, aws_iam_role_policy_attachment.lambda_s3_attachment]
-  timeout             = 60
-
-  # https://github.com/keithrozario/Klayers/tree/master/deployments/python3.10
-  layers = [
-    "arn:aws:lambda:eu-central-1:770693421928:layer:Klayers-p310-Pillow:3"
-  ]
-}
-
-

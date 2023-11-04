@@ -122,8 +122,8 @@ resource "aws_iam_policy" "lambda_policy" {
       ],
       "Resource": [
         "arn:aws:logs:*:*:*",
-        "arn:aws:s3:::${aws_s3_bucket.my_bucket.bucket}",
-        "arn:aws:s3:::${aws_s3_bucket.my_bucket.bucket}/*"
+        "arn:aws:s3:::${var.my_bucket.bucket}",
+        "arn:aws:s3:::${var.my_bucket.bucket}/*"
       ]
     }
   ]
@@ -131,7 +131,7 @@ resource "aws_iam_policy" "lambda_policy" {
 EOF
 }
 
-resource "aws_s3_bucket_policy" "example" {
+resource "aws_s3_bucket_policy" "s3_bucket_policy" {
   bucket = var.my_bucket.id
 
   policy = jsonencode({
@@ -145,7 +145,7 @@ resource "aws_s3_bucket_policy" "example" {
           "s3:GetObject"
         ]
         Resource = [
-          "${aws_s3_bucket.my_bucket.arn}/*"
+          "${var.my_bucket.arn}/*"
         ]
       }
     ]
@@ -167,7 +167,7 @@ resource "aws_iam_instance_profile" "ec2_flask_profile" {
 }
 
 resource "aws_iam_policy_attachment" "lambda_policy_role" {
-  name       = "lambda-attach"
+  name       = "lambda-policy"
   roles      = [aws_iam_role.lambda_role.name]
   policy_arn = aws_iam_policy.lambda_policy.arn
 }

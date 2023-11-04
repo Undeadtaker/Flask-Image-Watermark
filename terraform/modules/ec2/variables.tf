@@ -14,3 +14,9 @@ variable "ec2_flask_profile" {
   description = "The profile name"
   type        = string
 }
+variable "ec2_flask_SG" {
+  type        = string
+}
+variable "ec2_observe_SG" {
+  type        = string
+}
