@@ -1,4 +1,9 @@
-variable "my_bucket" {
-  description = "The s3 bucket created"
-  type = "string"
+variable "my_bucket_name" {
+  type = string
+}
+variable "my_bucket_id" {
+  type = string
+}
+variable "my_bucket_arn" {
+  type = string
 }

@@ -1,7 +1,7 @@
 // Create the pem key which will allow ansible to connect via SSH 
 // will maybe not work, so better to test it out before deployment
 resource "tls_private_key" "ssh_key" {
-  algorith                = "RSA"
+  algorithm               = "RSA"
   rsa_bits                = 4096
 }
 
@@ -18,7 +18,7 @@ resource "local_sensitive_file" "pem_file" {
 }
 
 resource "aws_network_interface" "observe_private_eni" {
-  subnet_id               = var.main_private_subnet.id
+  subnet_id               = var.main_private_subnet
 
   tags = {
       Name = "private-observe-eni-01"
@@ -27,7 +27,7 @@ resource "aws_network_interface" "observe_private_eni" {
 
 resource "aws_network_interface" "flask_private_eni" {
   count                   = 2
-  subnet_id               = var.main_private_subnet.id
+  subnet_id               = var.main_private_subnet
 
   tags = {
       Name = format("private-flask-eni-0%d", count.index)
@@ -39,7 +39,7 @@ resource "aws_instance" "observe_master" {
   instance_type           = var.instance_type
   key_name                = aws_key_pair.key_pair.key_name
   iam_instance_profile    = var.ec2_flask_profile  // CHANGE LATER TO OBSERVE EC2 IAM PROFILE
-  security_groups         = var.ec2_observe_SG
+  security_groups         = [var.ec2_observe_SG]
   
   root_block_device {
     delete_on_termination = true
@@ -64,7 +64,7 @@ resource "aws_instance" "flask_instances" {
   instance_type           = var.instance_type
   key_name                = aws_key_pair.key_pair.key_name
   iam_instance_profile    = var.ec2_flask_profile
-  security_groups         = var.ec2_flask_SG
+  security_groups         = [var.ec2_flask_SG]
   
   root_block_device {
     delete_on_termination = true

@@ -7,13 +7,13 @@ terraform {
   }
 }
 provider "aws" {
-  region     = var.region
+  region     = var.default_region
   access_key = var.access_key
   secret_key = var.secret_key
 }
 
 
-module "netorking" {
+module "networking" {
   source                 = "./modules/networking"
   main_cidr_block        = var.main_cidr_block
   default_region         = var.default_region
@@ -21,6 +21,7 @@ module "netorking" {
 
 module "security_groups" {
   source                 = "./modules/security_groups"
+  main_vpc               = module.networking.main_vpc  
 }
 
 module "ec2" {
@@ -28,8 +29,8 @@ module "ec2" {
   base_ami               = var.base_ami
   instance_type          = var.instance_type
 
-  main_private_subnet    = module.netorking.main_private_subnet
-  ec2_profile_name       = module.iam.ec2_flask_profile
+  main_private_subnet    = module.networking.main_private_subnet
+  ec2_flask_profile      = module.iam.ec2_flask_profile
   ec2_flask_SG           = module.security_groups.ec2_flask_SG
   ec2_observe_SG         = module.security_groups.ec2_observe_SG
 }
@@ -40,7 +41,9 @@ module "s3" {
 
 module "iam" {
   source                 = "./modules/iam"
-  my_bucket              = module.s3.my_bucket
+  my_bucket_name         = module.s3.my_bucket_name
+  my_bucket_id           = module.s3.my_bucket_id
+  my_bucket_arn          = module.s3.my_bucket_arn
 }
 
 module "lambda" {

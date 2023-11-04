@@ -95,7 +95,7 @@ resource "aws_security_group" "ec2_observe_SG" {
     from_port   = 9100
     to_port     = 9100
     protocol    = "tcp"
-    security_groups = [aws_security_group.EC2_flask_SG.id]
+    security_groups = [aws_security_group.ec2_flask_SG.id]
   }
 
   # Inbound rule for cAdvisor (e.g., port 8080)
@@ -103,7 +103,7 @@ resource "aws_security_group" "ec2_observe_SG" {
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-    security_groups = [aws_security_group.EC2_flask_SG.id]
+    security_groups = [aws_security_group.ec2_flask_SG.id]
   }
 
   # Inbound rule for Promtail (e.g., syslog port)
@@ -111,7 +111,7 @@ resource "aws_security_group" "ec2_observe_SG" {
     from_port   = 514
     to_port     = 514
     protocol    = "tcp"
-    security_groups = [aws_security_group.EC2_flask_SG.id]
+    security_groups = [aws_security_group.ec2_flask_SG.id]
   }
 
   ingress {

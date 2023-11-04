@@ -8,5 +8,5 @@ variable "main_public_subnet" {
   type = string
 }
 variable "flask_instance_ids" {
-  type = list()
+  type = list(string)
 }

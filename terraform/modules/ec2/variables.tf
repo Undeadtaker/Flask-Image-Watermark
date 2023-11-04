@@ -1,5 +1,5 @@
 variable "main_private_subnet" {
-  description = "The private subnet from networking module"
+  description = "The id of private subnet from networking module"
   type        = string
 }
 variable "base_ami" {

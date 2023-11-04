@@ -1,4 +1,3 @@
-// Roles
 resource "aws_iam_role" "lambda_role" {
   name = format("lambda-role")
 
@@ -17,6 +16,7 @@ resource "aws_iam_role" "lambda_role" {
   ]
 }
 EOF
+}
 resource "aws_iam_role" "ec2_role" {
   name = "ec2-flask-role"
 
@@ -122,8 +122,8 @@ resource "aws_iam_policy" "lambda_policy" {
       ],
       "Resource": [
         "arn:aws:logs:*:*:*",
-        "arn:aws:s3:::${var.my_bucket.bucket}",
-        "arn:aws:s3:::${var.my_bucket.bucket}/*"
+        "arn:aws:s3:::${var.my_bucket_name}",
+        "arn:aws:s3:::${var.my_bucket_name}/*"
       ]
     }
   ]
@@ -132,7 +132,7 @@ EOF
 }
 
 resource "aws_s3_bucket_policy" "s3_bucket_policy" {
-  bucket = var.my_bucket.id
+  bucket = var.my_bucket_id
 
   policy = jsonencode({
     Version = "2012-10-17"
@@ -145,7 +145,7 @@ resource "aws_s3_bucket_policy" "s3_bucket_policy" {
           "s3:GetObject"
         ]
         Resource = [
-          "${var.my_bucket.arn}/*"
+          "${var.my_bucket_arn}/*"
         ]
       }
     ]
