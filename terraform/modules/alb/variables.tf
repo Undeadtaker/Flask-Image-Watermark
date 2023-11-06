@@ -7,6 +7,9 @@ variable "alb_SG" {
 variable "main_public_subnet" {
   type = string
 }
+variable "second_public_subnet" {
+  type = string
+}
 variable "flask_instance_ids" {
   type = list(string)
 }

@@ -57,4 +57,5 @@ module "alb" {
   alb_SG                 = module.security_groups.alb_SG
   flask_instance_ids     = module.ec2.flask_instance_ids
   main_public_subnet     = module.networking.main_public_subnet
+  second_public_subnet   = module.networking.second_public_subnet
 }

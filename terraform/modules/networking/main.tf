@@ -27,7 +27,17 @@ resource "aws_subnet" "main_public" {
   availability_zone        = data.aws_availability_zones.primary_zone.names[0]
   cidr_block               = cidrsubnet(var.main_cidr_block, 2, 1)
   map_public_ip_on_launch  = true
-  depends_on               = [aws_internet_gateway.main]
+
+  tags = {
+    Name = "public_subnet"
+  }
+}
+
+resource "aws_subnet" "second_public" {
+  vpc_id                   = aws_vpc.main.id
+  availability_zone        = data.aws_availability_zones.primary_zone.names[1]
+  cidr_block               = cidrsubnet(var.main_cidr_block, 2, 2)
+  map_public_ip_on_launch  = true
 
   tags = {
     Name = "public_subnet"

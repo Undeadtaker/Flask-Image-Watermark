@@ -1,6 +1,9 @@
 output "main_public_subnet" {
     value = aws_subnet.main_public.id
 }
+output "second_public_subnet" {
+    value = aws_subnet.second_public.id
+}
 output "main_private_subnet" {
     value = aws_subnet.main_private.id
 }

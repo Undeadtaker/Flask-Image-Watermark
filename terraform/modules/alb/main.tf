@@ -2,7 +2,7 @@ resource "aws_lb" "flask" {
   name               = "flask-alb"
   internal           = false 
   load_balancer_type = "application"
-  subnets            = [var.main_public_subnet]
+  subnets            = [var.main_public_subnet, var.second_public_subnet]
   security_groups    = [var.alb_SG]
   enable_deletion_protection = false 
 }
