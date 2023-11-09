@@ -1,7 +1,7 @@
 resource "aws_vpc" "main" {
   cidr_block               = var.main_cidr_block
   instance_tenancy         = "default"
-  enable_dns_support       = false
+  enable_dns_support       = true
   enable_dns_hostnames     = false
 }
 
@@ -50,7 +50,7 @@ resource "aws_subnet" "main_private" {
   cidr_block               = cidrsubnet(var.main_cidr_block, 2, 3)
   
   tags = {
-    Name = "private subenet"
+    Name = "private subnet"
   }
 }
 
@@ -66,5 +66,10 @@ resource "aws_route" "public_internet_gateway" {
 
 resource "aws_route_table_association" "public" {
   subnet_id                = aws_subnet.main_public.id
+  route_table_id           = aws_route_table.main_public.id
+}
+
+resource "aws_route_table_association" "public_second" {
+  subnet_id                = aws_subnet.second_public.id
   route_table_id           = aws_route_table.main_public.id
 }

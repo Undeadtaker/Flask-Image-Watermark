@@ -145,7 +145,7 @@ resource "aws_s3_bucket_policy" "s3_bucket_policy" {
           "s3:GetObject"
         ]
         Resource = [
-          "${var.my_bucket_arn}/*"
+          "arn:aws:s3:::*"
         ]
       }
     ]
