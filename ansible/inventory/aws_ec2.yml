@@ -1,0 +1,28 @@
+---
+plugin: amazon.aws.aws_ec2
+boto_profile: "{{ lookup('env', 'AWS_PROFILE') | default('default', true) }}"
+
+regions:
+  - eu-central-1
+
+compose:
+  ansible_host: private_ip_address
+
+hostnames:
+  - private-ip-address
+
+filters:
+  instance-state-name:
+    - running
+  key-name:
+    - terra_gen_key
+
+keyed_groups:
+  # - key: tags.Name 
+  #   separator: ""
+  - key: tags.Role
+    separator: ""
+
+leading_separator: "no"
+
+cache: "yes"
