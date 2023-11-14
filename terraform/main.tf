@@ -30,6 +30,7 @@ module "ec2" {
   instance_type          = var.instance_type
 
   main_private_subnet    = module.networking.main_private_subnet
+  main_public_subnet     = module.networking.main_public_subnet
   ec2_flask_profile      = module.iam.ec2_flask_profile
   ec2_flask_SG           = module.security_groups.ec2_flask_SG
   ec2_observe_SG         = module.security_groups.ec2_observe_SG

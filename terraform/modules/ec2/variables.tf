@@ -2,6 +2,10 @@ variable "main_private_subnet" {
   description = "The id of private subnet from networking module"
   type        = string
 }
+variable "main_public_subnet" {
+  description = "The id of the main public subnet for master bastion host"
+  type        = string
+}
 variable "base_ami" {
   description = "The ami of ubuntu"
   type        = string

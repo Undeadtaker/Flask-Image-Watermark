@@ -1,0 +1,6 @@
+- hosts: flask
+  become: true
+  tags:
+    - startup
+  roles:
+    - startup

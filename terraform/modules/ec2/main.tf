@@ -17,6 +17,16 @@ resource "local_sensitive_file" "pem_file" {
   content = tls_private_key.ssh_key.private_key_pem
 }
 
+
+resource "aws_network_interface" "master_public_eni" {
+  subnet_id               = var.main_public_subnet
+  security_groups         = [var.ec2_flask_SG]
+
+  tags = {
+      Name = "public-master-eni-01"
+  }
+}
+
 resource "aws_network_interface" "observe_private_eni" {
   subnet_id               = var.main_private_subnet
   security_groups         = [var.ec2_observe_SG]
@@ -33,6 +43,29 @@ resource "aws_network_interface" "flask_private_eni" {
 
   tags = {
       Name = format("private-flask-eni-0%d", count.index)
+  }
+}
+
+resource "aws_instance" "vpc_master" {
+  ami                     = var.base_ami
+  instance_type           = var.instance_type
+  key_name                = aws_key_pair.key_pair.key_name
+  iam_instance_profile    = var.ec2_flask_profile  // CHANGE LATER TO OBSERVE EC2 IAM PROFILE
+  
+  root_block_device {
+    delete_on_termination = true
+    volume_size           = 8
+    volume_type           = "gp2"
+  }
+  
+  network_interface {
+    network_interface_id  = aws_network_interface.master_public_eni.id
+    device_index          = 0
+  }
+  
+  tags = {
+    Name                  = "vpc_master"
+    Role                  = "vpc master"
   }
 }
 

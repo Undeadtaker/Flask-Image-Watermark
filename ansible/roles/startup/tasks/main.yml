@@ -1,0 +1,14 @@
+- name: Install required system packages for ubuntu
+  tags:
+    - packages
+  ansible.builtin.apt:
+    pkg:
+      - apt-transport-https
+      - curl
+      - python3
+      - python3-pip
+      - python3-virtualenv
+      - nginx
+    state: present
+    update_cache: true
+  when: ansible_distribution == "Ubuntu"
