@@ -9,4 +9,4 @@ ssh-add ../private.pem
 ### Run ansible to configure the nodes
 ansible-galaxy install -r requirements.yml
 ansible-inventory --graph
-ansible --inventory inventory/aws_ec2.yml --extra-vars "extra-vars.yml" all -m ping
+ansible -i inventory/aws_ec2.yml --extra-vars "extra-vars.yml" all -m ping

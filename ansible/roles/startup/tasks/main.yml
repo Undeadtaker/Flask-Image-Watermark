@@ -12,3 +12,30 @@
     state: present
     update_cache: true
   when: ansible_distribution == "Ubuntu"
+
+- name: Copy the Flask app to the instances
+  ansible.builtin.copy:
+    src: /home/ubuntu/ansible/roles/startup/files/flask-app
+    dest: /home/ubuntu/
+    mode: 0755
+    owner: ubuntu
+    group: ubuntu
+
+- name: Change to the app directory
+  ansible.builtin.shell:
+    cmd: "ls /home/ubuntu/flask-app"  # Use ls or any command that doesn't require changing the directory
+  args:
+    chdir: "/home/ubuntu/flask-app"
+
+
+- name: Initialize virtualenv and install python packages
+  become: true
+  ansible.builtin.shell:
+    cmd: |
+      virtualenv --python venv
+      source ./venv/bin/activate
+      pip3 install Flask
+      pip3 install gunicorn
+      pip3 install boto3
+  args:
+    chdir: "/home/ubuntu/flask-app"
