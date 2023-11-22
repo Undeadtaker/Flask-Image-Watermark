@@ -21,21 +21,68 @@
     owner: ubuntu
     group: ubuntu
 
-- name: Change to the app directory
-  ansible.builtin.shell:
-    cmd: "ls /home/ubuntu/flask-app"  # Use ls or any command that doesn't require changing the directory
-  args:
-    chdir: "/home/ubuntu/flask-app"
+- name: Copy the AWS profile directory to the Flask instances
+  ansible.builtin.copy:
+    src: /home/ubuntu/.aws
+    dest: /home/ubuntu/
+    mode: 0755
+    owner: ubuntu
+    group: ubuntu
 
-
-- name: Initialize virtualenv and install python packages
-  become: true
+- name: Initialize virtualenv
   ansible.builtin.shell:
     cmd: |
-      virtualenv --python venv
-      source ./venv/bin/activate
-      pip3 install Flask
-      pip3 install gunicorn
-      pip3 install boto3
+      virtualenv venv
   args:
     chdir: "/home/ubuntu/flask-app"
+
+- name: Set ownership of venv directory to ubuntu user
+  ansible.builtin.file:
+    path: "/home/ubuntu/flask-app/venv"
+    owner: ubuntu
+    group: ubuntu
+    recurse: yes
+
+- name: Install python packages
+  ansible.builtin.pip:
+    name:
+      - Flask
+      - gunicorn
+      - boto3
+    executable: /home/ubuntu/flask-app/venv/bin/pip3
+
+- name: Copy gunicorn.service
+  become: true
+  ansible.builtin.template:
+    src: /home/ubuntu/ansible/roles/startup/templates/gunicorn.service
+    dest: "/etc/systemd/system/gunicorn.service"
+    mode: 0755
+    
+- name: Remove default nginx.conf
+  become: true
+  ansible.builtin.file:
+    path: /etc/nginx/sites-enabled/default
+    state: absent
+
+- name: Copy nginx.conf
+  become: true
+  ansible.builtin.template:
+    src: /home/ubuntu/ansible/roles/startup/templates/nginx.conf
+    dest: "/etc/nginx/sites-enabled/nginx.conf"
+    mode: 0755
+
+- name: Reload systemd daemon
+  command: sudo systemctl daemon-reload
+
+- name: Enable and start gunicorn.service
+  become: true
+  ansible.builtin.service:
+    name: gunicorn.service
+    enabled: true
+    state: started
+
+- name: Enable and start nginx service
+  become: true
+  ansible.builtin.service:
+    name: nginx.service
+    state: reloaded
