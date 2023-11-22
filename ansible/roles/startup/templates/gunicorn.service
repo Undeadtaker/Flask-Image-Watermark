@@ -1,0 +1,14 @@
+[Unit]
+Description=Gunicorn service for Flask app
+
+# Bring this up after the network is online
+After=network.target
+
+[Service]
+User=ubuntu
+WorkingDirectory=/home/ubuntu/flask-app
+ExecStart=/home/ubuntu/flask-app/venv/bin/gunicorn -b localhost:8000 -w 3 app:app
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target
